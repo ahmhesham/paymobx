@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>paymobx Django Example</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 10px; width: 100%; }
+        input { padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>paymobx Checkout</h1>
+        <p>Test all payment methods here.</p>
+        
+        <form action="{% url 'pay_with_card' %}" method="get">
+            <button type="submit">Pay with Credit Card</button>
+        </form>
+        
+        <hr>
+        
+        <form action="{% url 'pay_with_wallet' %}" method="get">
+            <input type="text" name="wallet_number" placeholder="Enter Wallet Number" value="01012345678">
+            <button type="submit" style="background: #28a745;">Pay with Mobile Wallet</button>
+        </form>
+    </div>
+</body>
+</html>

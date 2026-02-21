@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Payment Status</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; text-align: center; }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        {% if error %}
+            <h1 class="error">Verification Error</h1>
+            <p>{{ error }}</p>
+        {% elif success %}
+            <h1 class="success">Payment Successful!</h1>
+            <p>Your transaction has been verified securely.</p>
+        {% else %}
+            <h1 class="error">Payment Failed</h1>
+            <p>Please try again.</p>
+        {% endif %}
+        <a href="{% url 'index' %}">Back to Home</a>
+    </div>
+</body>
+</html>
