@@ -26,7 +26,9 @@ from paymobx import PaymobxClient
 client = PaymobxClient(api_key="your_PAYMOB_api_key")
 ```
 
-#### `create_order(amount_cents: int, currency: str, items: list = None, delivery_needed: bool = False) -> dict`
+ ```python 
+ create_order(amount_cents: int, currency: str, items: list = None, delivery_needed: bool = False) -> dict
+ ````
 
 Creates an order in the paymob ecommerce system.
 
@@ -35,7 +37,9 @@ Creates an order in the paymob ecommerce system.
 - **`items`**: (Optional) List of line items for the order.
 - **`delivery_needed`**: (Optional) Boolean indicating if shipping is required.
 
-#### `generate_payment_key(amount_cents: int, order_id: str, integration_id: int, billing_data: dict, currency: str, expiration: int = 3600) -> str`
+ ```python 
+ generate_payment_key(amount_cents: int, order_id: str, integration_id: int, billing_data: dict, currency: str, expiration: int = 3600) -> str
+ ```
 
 Generates a session token (payment key) required to initiate a payment.
 
@@ -43,14 +47,16 @@ Generates a session token (payment key) required to initiate a payment.
   - *Key fields*: `first_name`, `last_name`, `email`, `phone_number`.
 - **`integration_id`**: Your Payment Integration ID from the paymob dashboard.
 
-#### `get_iframe_url(iframe_id: int, payment_token: str) -> str`
+ ```python 
+ get_iframe_url(iframe_id: int, payment_token: str) -> str
+ ```
 
 Generates the full URL for a card payment iframe.
 
 - **`iframe_id`**: Your Iframe ID from the paymob dashboard.
 - **`payment_token`**: The string returned by `generate_payment_key`.
 
-#### `initiate_wallet_payment(payment_token: str, wallet_number: str) -> str`
+#### ```initiate_wallet_payment(payment_token: str, wallet_number: str) -> str```
 
 Initiates a mobile wallet transaction and returns the redirection URL.
 
@@ -62,11 +68,15 @@ Initiates a mobile wallet transaction and returns the redirection URL.
 
 Use these to securely verify that requests incoming to your server are actually from paymob.
 
-#### `verify_hmac(request_data: dict, hmac_secret: str, hmac_received: str) -> bool`
+```python
+verify_hmac(request_data: dict, hmac_secret: str, hmac_received: str) -> bool
+```
 
 Verifies the HMAC for **Transaction Callbacks** (webhooks sent as POST).
 
-#### `verify_response_hmac(query_params: dict, hmac_secret: str, hmac_received: str) -> bool`
+```python
+verify_response_hmac(query_params: dict, hmac_secret: str, hmac_received: str) -> bool
+```
 
 Verifies the HMAC for **Transaction Response Callbacks** (sent as GET parameters after a redirect).
 
