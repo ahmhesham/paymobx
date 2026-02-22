@@ -56,7 +56,9 @@ Generates the full URL for a card payment iframe.
 - **`iframe_id`**: Your Iframe ID from the paymob dashboard.
 - **`payment_token`**: The string returned by `generate_payment_key`.
 
-#### ```initiate_wallet_payment(payment_token: str, wallet_number: str) -> str```
+ ```python 
+ initiate_wallet_payment(payment_token: str, wallet_number: str) -> str
+```
 
 Initiates a mobile wallet transaction and returns the redirection URL.
 
