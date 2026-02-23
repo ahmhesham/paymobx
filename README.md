@@ -9,6 +9,11 @@ Install directly from GitHub:
 ```bash
 pip install git+https://github.com/ahmhesham/paymobx.git
 ```
+or
+
+```bash
+pip install paymobx
+```
 
 ## Core Components
 
