@@ -1,42 +1,115 @@
-# Python
+# ==========================================================
+# Python bytecode & compiled files
+# ==========================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
-env/
+
+# ==========================================================
+# Distribution / packaging
+# ==========================================================
 build/
-develop-eggs/
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
 sdist/
-var/
 wheels/
 *.egg-info/
-.installed.cfg
 *.egg
+.eggs/
+eggs/
+develop-eggs/
+downloads/
+parts/
+var/
+MANIFEST
+pip-wheel-metadata/
+share/python-wheels/
 
-# Virtual Environments
+# ==========================================================
+# Virtual environments
+# ==========================================================
+.venv/
 venv/
+env/
 ENV/
+env.bak/
+venv.bak/
 
-# IDEs
+# ==========================================================
+# Testing / coverage / tox
+# ==========================================================
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+*.cover
+
+# ==========================================================
+# Type checking / linting caches
+# ==========================================================
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.ruff_cache/
+.pytype/
+.pyre/
+
+# ==========================================================
+# Build tooling
+# ==========================================================
+.python-version
+.tox/
+.nox/
+
+# ==========================================================
+# Secrets / local env files
+# (shouldn't exist in a library, but safety net)
+# ==========================================================
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# ==========================================================
+# Editors & IDEs
+# ==========================================================
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 
-# OS
+# ==========================================================
+# OS files
+# ==========================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Django specifics (for the example)
-*.log
-local_settings.py
+
+# ==========================================================
+# django
+# ==========================================================
 db.sqlite3
 db.sqlite3-journal
+*.log
+local_settings.py
+.env
 media/
 staticfiles/
+static_root/
+__pycache__/
+*.py[cod]
+.venv/
+venv/

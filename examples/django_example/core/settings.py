@@ -118,10 +118,18 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# ----------------------------------------------------------------------
 # paymobx Configuration
-PAYMOBX_API_KEY = ""
-PAYMOBX_HMAC = ""
-PAYMOBX_CARD_INTEGRATION_ID = 0000000
-PAYMOBX_IFRAME_ID = 000000
-PAYMOBX_WALLET_INTEGRATION_ID = 000
+# ----------------------------------------------------------------------
+# All three keys live in Paymob Dashboard -> Settings -> Developers.
 
+PAYMOBX_API_KEY    = ""   # legacy flow only (create_order / generate_payment_key)
+PAYMOBX_SECRET_KEY = ""   # modern Intention API flow (create_intention)
+PAYMOBX_PUBLIC_KEY = ""   # modern Unified Checkout URL
+PAYMOBX_HMAC       = ""   # Dashboard -> Settings -> HMAC
+
+# Integration IDs — Dashboard -> Developers -> Payment Integrations
+PAYMOBX_CARD_INTEGRATION_ID   = 0
+PAYMOBX_WALLET_INTEGRATION_ID = 0
+PAYMOBX_KIOSK_INTEGRATION_ID  = 0   # Fawry / Kiosk
+PAYMOBX_IFRAME_ID             = 0   # legacy iframe only

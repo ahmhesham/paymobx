@@ -1,10 +1,15 @@
 import hmac
 import hashlib
 
+
 def verify_hmac(request_data: dict, hmac_secret: str, hmac_received: str) -> bool:
     """
-    Verifies HMAC for POST callbacks (Processed callbacks).
+    Verifies HMAC for POST callbacks (Transaction Processed webhooks).
+    Works for both legacy Order callbacks and modern Intention callbacks.
     """
+    if not hmac_received:
+        return False
+
     fields = [
         ('obj', 'amount_cents'), ('obj', 'created_at'), ('obj', 'currency'),
         ('obj', 'error_occured'), ('obj', 'has_parent_transaction'), ('obj', 'id'),
@@ -33,10 +38,14 @@ def verify_hmac(request_data: dict, hmac_secret: str, hmac_received: str) -> boo
     gen = hmac.new(hmac_secret.encode(), msg.encode(), hashlib.sha512).hexdigest()
     return hmac.compare_digest(gen, hmac_received)
 
+
 def verify_response_hmac(query_params: dict, hmac_secret: str, hmac_received: str) -> bool:
     """
-    Verifies HMAC for GET callbacks (Response callbacks).
+    Verifies HMAC for GET callbacks (Transaction Response redirects).
     """
+    if not hmac_received:
+        return False
+
     fields = [
         'amount_cents', 'created_at', 'currency', 'error_occured',
         'has_parent_transaction', 'id', 'integration_id', 'is_3d_secure',
