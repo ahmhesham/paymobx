@@ -5,12 +5,14 @@ from .exceptions import (
     PaymobxRequestError,
     PaymobxValidationError,
 )
+from .operations import PaymentOperationsMixin
 from .utils import verify_hmac, verify_response_hmac
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 __all__ = [
     "PaymobxClient",
+    "PaymentOperationsMixin",
     "PaymobxError",
     "PaymobxAuthenticationError",
     "PaymobxRequestError",

@@ -1,89 +1,95 @@
-# paymobx Python Integration
+# paymobx
 
-A simple Python library for integrating [Paymob](https://paymob.com/) payments.
+Python client for the Paymob payment gateway.
 
-Supports two flows:
+Two flows are supported:
 
-- **Modern (recommended)** — Intention API + Unified Checkout (cards, wallets, **Fawry/Kiosk**, BNPL)
-- **Legacy** — Order → Payment Key → Iframe / Wallet
+- Modern: Intention API + Unified Checkout (cards, wallets, Fawry/Kiosk, BNPL)
+- Legacy: Order -> Payment Key -> Iframe / Wallet
 
-Plus framework-agnostic **HMAC verification** helpers and a built-in **Django integration**.
+It also covers the payment lifecycle (refund, void, capture, inquiry, payment links, saved cards/MOTO, subscriptions), ships HMAC verification helpers, includes a Django integration, and works across all Paymob regions: Egypt, UAE, Oman, and Saudi Arabia.
 
 ## Installation
-
-Install directly from GitHub (latest dev version):
 
 ```bash
 pip install git+https://github.com/ahmhesham/paymobx.git
 ```
 
-Or from PyPI (once published):
+Or from PyPI once published:
 
 ```bash
 pip install paymobx
 ```
 
----
-
-## Core Components
-
-The library revolves around the `PaymobxClient` and a set of utility functions for HMAC verification.
-
-### `PaymobxClient`
-
-The main entry point for all Paymob API interactions.
-
-#### Initialization
+## Client
 
 ```python
 from paymobx import PaymobxClient
 
 client = PaymobxClient(
-    secret_key="egy_sk_test_xxx",   # Intention API (modern flow)
+    secret_key="egy_sk_test_xxx",   # Intention API
     public_key="egy_pk_test_xxx",   # Unified Checkout URL
-    api_key="your_api_key",         # Optional — legacy flow only
+    api_key="your_api_key",         # legacy flow and lifecycle methods
+    region="egypt",                 # egypt | uae | oman | ksa
 )
 ```
 
-| Parameter    | Used by                                              | Where to find it |
-| ------------ | ---------------------------------------------------- | ---------------- |
-| `secret_key` | `create_intention`, `create_fawry_intention`         | Dashboard → Settings → Developers |
-| `public_key` | `get_unified_checkout_url`                           | Dashboard → Settings → Developers |
-| `api_key`    | `create_order`, `generate_payment_key`, wallet       | Dashboard → Settings → Developers |
+| Parameter    | Used by                                                                    | Where to find it |
+| ------------ | -------------------------------------------------------------------------- | ---------------- |
+| `secret_key` | `create_intention`, `create_fawry_intention`                              | Dashboard -> Settings -> Developers |
+| `public_key` | `get_unified_checkout_url`                                                | Dashboard -> Settings -> Developers |
+| `api_key`    | `create_order`, `generate_payment_key`, wallet, all lifecycle methods     | Dashboard -> Settings -> Developers |
+| `region`     | every API call                                                             | Pick your account's region: `egypt`, `uae`, `oman`, `ksa`. Default `egypt` |
 
----
+The lifecycle methods (refund, void, capture, inquiry, payment links, saved cards, subscriptions) authenticate with `api_key` only. If you use the Intention flow and also need lifecycle control, pass both `secret_key` and `api_key`.
 
-## Modern Flow — Intention API + Unified Checkout (Recommended)
+### Regions
 
-### `create_intention(amount_cents, currency, payment_methods, billing_data, **kwargs) -> dict`
+Pass `region="uae"`, `"oman"`, or `"ksa"` and every method — modern and legacy, including refund / void / capture / inquiry / payment links / MOTO / subscriptions — goes to the correct Paymob host automatically.
 
-Creates a payment intention and returns a dict containing `client_secret`, which you pass to `get_unified_checkout_url`.
+```python
+client_uae = PaymobxClient(
+    secret_key="uae_sk_test_xxx",
+    public_key="uae_pk_test_xxx",
+    api_key="uae_api_key",
+    region="uae",
+)
 
-**Required:**
+client_uae.create_intention(...)          # uae.paymob.com/v1/intention/
+client_uae.refund_transaction("987")      # uae.paymob.com/api/acceptance/void_refund/refund
+```
 
-- **`amount_cents`**: Amount in smallest currency unit (e.g. `10000` = `100.00`).
-- **`currency`**: ISO currency code (`"EGP"`, `"USD"`, `"SAR"`, `"AED"`, `"OMR"`).
-- **`payment_methods`**: List of integration IDs (card, wallet, kiosk, BNPL…).
-- **`billing_data`**: Customer details. Missing fields are auto-filled with `"NA"` — but always provide at least `first_name` and `phone_number`.
+## Modern flow
 
-**Optional:**
+### create_intention(amount_cents, currency, payment_methods, billing_data, **kwargs)
 
-- **`items`**: Line items (`name`, `amount_cents`, `description`).
-- **`special_reference`**: Your internal order ID.
-- **`notification_url`**: Public HTTPS webhook (POST) for server-to-server confirmation.
-- **`redirection_url`**: Public HTTPS URL to redirect the customer after payment.
-- **`expiration`**: Intention lifetime in seconds (default `3600`).
-- **`extras`**: Arbitrary metadata dict.
+Creates an intention and returns a dict with `client_secret`, which you pass to `get_unified_checkout_url`.
 
-### `get_unified_checkout_url(client_secret, region="egypt") -> str`
+Required:
 
-Builds the Paymob Unified Checkout URL. Supported regions: `"egypt"`, `"uae"`, `"oman"`, `"ksa"`.
+- `amount_cents`: amount in the smallest currency unit (10000 = 100.00)
+- `currency`: ISO code (EGP, USD, SAR, AED, OMR)
+- `payment_methods`: list of integration IDs
+- `billing_data`: customer details; missing fields are filled with "NA"
 
-### `create_fawry_intention(amount_cents, currency, kiosk_integration_id, billing_data, **kwargs) -> dict`
+Optional:
 
-Convenience wrapper around `create_intention` that restricts payment methods to a single **Kiosk** integration ID (this is how **Fawry** is exposed on Paymob).
+- `items`: line items (`name`, `amount_cents`, `description`)
+- `special_reference`: your internal order ID
+- `notification_url`: public HTTPS webhook for server-to-server confirmation
+- `redirection_url`: public HTTPS URL to send the customer back to
+- `expiration`: intention lifetime in seconds (default 3600)
+- `extras`: any extra metadata dict
 
-### Full Card Flow Example
+### get_unified_checkout_url(client_secret, region=None, public_key=None)
+
+Builds the checkout URL. `region` defaults to the client's region; pass it explicitly to override for a single call. Supported regions: `egypt`, `uae`, `oman`, `ksa`.
+
+### create_fawry_intention(amount_cents, currency, kiosk_integration_id, billing_data, **kwargs)
+
+Wrapper around `create_intention` that uses a single Kiosk integration ID (that's how Fawry is exposed on Paymob).
+
+### Card example
 
 ```python
 from paymobx import PaymobxClient
@@ -96,7 +102,7 @@ client = PaymobxClient(
 intention = client.create_intention(
     amount_cents=15000,
     currency="EGP",
-    payment_methods=[1234],  # Your Card Integration ID
+    payment_methods=[1234],
     billing_data={
         "first_name": "Magka",
         "email": "user@example.com",
@@ -109,14 +115,13 @@ intention = client.create_intention(
 
 url = client.get_unified_checkout_url(
     client_secret=intention["client_secret"],
-    region="egypt",
 )
-print(f"Redirect user to: {url}")
+print(url)
 ```
 
-### Fawry / Kiosk Flow Example
+### Fawry example
 
-Create a **Kiosk** integration in the Paymob dashboard (Developers → Payment Integrations → Add → "Accept Kiosk") and use its integration ID:
+Create a Kiosk integration in the dashboard (Developers -> Payment Integrations -> Add -> Accept Kiosk) and use its ID:
 
 ```python
 intention = client.create_fawry_intention(
@@ -132,33 +137,19 @@ intention = client.create_fawry_intention(
 )
 
 url = client.get_unified_checkout_url(intention["client_secret"])
-# Customer sees Fawry as the payment option on Unified Checkout
-print(f"Fawry checkout: {url}")
+print(url)
 ```
 
----
+## Legacy flow
 
-## Legacy Flow — Order / Payment Key / Iframe / Wallet
+Use this if you already have an iframe integration or need a direct wallet redirect.
 
-The legacy methods still work unchanged. Use them if you already have an `iframe_id`-based integration or need a direct wallet redirect.
+- `create_order(amount_cents, currency, items=None, delivery_needed=False)` creates an order
+- `generate_payment_key(amount_cents, order_id, integration_id, billing_data, currency, expiration=3600)` returns a session token
+- `get_iframe_url(iframe_id, payment_token)` builds the iframe URL
+- `initiate_wallet_payment(payment_token, wallet_number)` returns the redirect URL
 
-### `create_order(amount_cents, currency, items=None, delivery_needed=False) -> dict`
-
-Creates an order in the Paymob ecommerce system.
-
-### `generate_payment_key(amount_cents, order_id, integration_id, billing_data, currency, expiration=3600) -> str`
-
-Generates a session token (payment key). Missing `billing_data` fields are auto-filled with `"NA"`.
-
-### `get_iframe_url(iframe_id, payment_token) -> str`
-
-Builds the full URL for a card payment iframe.
-
-### `initiate_wallet_payment(payment_token, wallet_number) -> str`
-
-Initiates a mobile wallet transaction and returns the redirection URL.
-
-### Full Card Flow (Legacy)
+### Card example
 
 ```python
 client = PaymobxClient(api_key="your_api_key")
@@ -174,10 +165,10 @@ token = client.generate_payment_key(
 )
 
 url = client.get_iframe_url(iframe_id=5678, payment_token=token)
-print(f"Direct user to: {url}")
+print(url)
 ```
 
-### Full Mobile Wallet Flow (Legacy)
+### Wallet example
 
 ```python
 client = PaymobxClient(api_key="your_api_key")
@@ -187,49 +178,137 @@ order = client.create_order(amount_cents=10000, currency="EGP")
 token = client.generate_payment_key(
     amount_cents=10000,
     order_id=order["id"],
-    integration_id=4321,  # Wallet Integration ID
+    integration_id=4321,
     billing_data={"first_name": "Magka"},
     currency="EGP",
 )
 
-redirection_url = client.initiate_wallet_payment(
+url = client.initiate_wallet_payment(
     payment_token=token,
     wallet_number="01010101010",
 )
-print(f"Redirect user to: {redirection_url}")
+print(url)
 ```
 
----
+## Payment lifecycle
 
-## HMAC Verification Utilities
+These methods live on `PaymobxClient` through `PaymentOperationsMixin`. They authenticate with `api_key` and automatically use the client's `region`.
 
-Use these to securely verify that requests to your server are actually from Paymob. They work for **both** legacy and modern Intention callbacks (the signed field list is identical).
+```python
+from paymobx import PaymobxClient
 
-### `verify_hmac(request_data: dict, hmac_secret: str, hmac_received: str) -> bool`
+client = PaymobxClient(api_key="your_api_key", region="egypt")
+```
 
-Verifies the HMAC for **Transaction Callbacks** (POST webhooks).
+### Refund / void / capture
 
-### `verify_response_hmac(query_params: dict, hmac_secret: str, hmac_received: str) -> bool`
+| Method | Endpoint |
+| ------ | -------- |
+| `refund_transaction(transaction_id, amount_cents=None)` | `POST /api/acceptance/void_refund/refund` |
+| `void_transaction(transaction_id)` | `POST /api/acceptance/void_refund/void` |
+| `capture_transaction(transaction_id, amount_cents)` | `POST /api/acceptance/capture` |
 
-Verifies the HMAC for **Transaction Response Callbacks** (GET redirects).
+```python
+client.refund_transaction("987654321")                    # full refund
+client.refund_transaction("987654321", amount_cents=5000) # partial refund
+client.void_transaction("987654321")
+client.capture_transaction("987654321", amount_cents=15000)
+```
+
+Void only works before settlement (usually same day). Capture is for Auth/Cap integrations.
+
+### Inquiry
+
+| Method | Endpoint |
+| ------ | -------- |
+| `get_transaction_by_id(transaction_id)` | `GET /api/acceptance/transactions/{id}` |
+| `get_transaction_by_order_id(order_id=None, merchant_order_id=None)` | `POST /api/ecommerce/orders/transaction_inquiry` |
+
+```python
+client.get_transaction_by_id("987654321")
+client.get_transaction_by_order_id(merchant_order_id="order-001")
+```
+
+`merchant_order_id` is the `special_reference` you set when creating the intention. Useful when a webhook is missed.
+
+### Payment links
+
+| Method | Endpoint |
+| ------ | -------- |
+| `create_payment_link(...)` | `POST /api/ecommerce/payment-links` |
+
+```python
+link = client.create_payment_link(
+    amount_cents=15000,
+    currency="EGP",
+    integration_id=1234,
+    full_name="Magka",
+    phone_number="+201012345678",
+    email="user@example.com",
+    description="Invoice #001",
+    reference_id="order-001",
+    notification_url="https://your-app.com/callback/processed/",
+    redirection_url="https://your-app.com/callback/response/",
+)
+print(link)
+```
+
+### Saved cards / MOTO
+
+Needs a MOTO integration ID, a `payment_token` for that integration, and a saved `card_token`.
+
+| Method | Endpoint |
+| ------ | -------- |
+| `pay_with_saved_card(payment_token, card_token, subtype="TOKEN")` | `POST /api/acceptance/payments/pay` |
+
+```python
+response = client.pay_with_saved_card(
+    payment_token="moto_payment_key_xxx",
+    card_token="saved_card_token_xxx",
+)
+print(response)
+```
+
+Set `subtype="CARD"` if your integration expects that instead of `TOKEN`.
+
+### Subscription plans
+
+| Method | Endpoint |
+| ------ | -------- |
+| `create_subscription_plan(...)` | `POST /api/acceptance/subscription-plans` |
+
+```python
+plan = client.create_subscription_plan(
+    plan_name="Pro Monthly",
+    amount_cents=9900,
+    frequency="MONTHLY",
+    moto_integration_id=5555,
+    webhook_url="https://your-app.com/subscriptions/webhook/",
+)
+print(plan)
+```
+
+Paymob calls `webhook_url` on every billing cycle.
+
+## HMAC verification
+
+Both helpers work with legacy and Intention callbacks.
+
+- `verify_hmac(request_data, hmac_secret, hmac_received)` for POST webhooks
+- `verify_response_hmac(query_params, hmac_secret, hmac_received)` for GET redirects
 
 ```python
 from paymobx import verify_hmac, verify_response_hmac
 
-# POST webhook
 ok = verify_hmac(request_data, hmac_secret, received_hmac)
-
-# GET redirect
 ok = verify_response_hmac(request.GET.dict(), hmac_secret, received_hmac)
 ```
 
----
+## Django
 
-## Django Integration
+Helpers live in `paymobx.integrations.django`.
 
-Dedicated helpers for Django live in `paymobx.integrations.django`.
-
-### 1. Transaction Processed Callback (Webhook)
+### Webhook
 
 ```python
 from django.http import HttpResponse
@@ -242,13 +321,12 @@ def processed_callback(request):
     if is_valid_callback(request, settings.PAYMOBX_HMAC):
         data = json.loads(request.body)
         if data["obj"]["success"]:
-            # Success! Update your database here
-            pass
+            pass  # update your database here
         return HttpResponse(status=200)
     return HttpResponse(status=400)
 ```
 
-### 2. Transaction Response (Redirect)
+### Redirect
 
 ```python
 from paymobx.integrations.django import is_valid_response
@@ -259,50 +337,77 @@ def payment_success(request):
     return render(request, "failed.html")
 ```
 
----
+### Paid-status shortcuts
 
-## Error Handling
+Two more helpers combine HMAC verification with the success check, so a webhook view stays one line:
 
-The library raises specific exceptions for easier debugging:
+```python
+from paymobx.integrations.django import is_paid_callback, is_paid_response
+
+@csrf_exempt
+def processed_callback(request):
+    if is_paid_callback(request, settings.PAYMOBX_HMAC):
+        # HMAC is valid and obj.success is true
+        pass
+    return HttpResponse(status=200)
+
+def payment_response(request):
+    paid = is_paid_response(request, settings.PAYMOBX_HMAC)
+    return render(request, "status.html", {"success": paid})
+```
+
+## Errors
 
 | Exception                    | When it's raised |
 | ---------------------------- | ---------------- |
 | `PaymobxAuthenticationError` | Bad `api_key` / `secret_key`, or 401 from Paymob |
-| `PaymobxRequestError`        | Any non-2xx API response (`.status_code`, `.response` available) |
-| `PaymobxValidationError`     | Client-side validation failed (missing required arg, bad region, etc.) |
-| `PaymobxError`               | Base class for catching all paymobx exceptions |
+| `PaymobxRequestError`        | Any non-2xx response; `status_code` and `response` are attached |
+| `PaymobxValidationError`     | Client-side validation failed (missing argument, bad region, etc) |
+| `PaymobxError`               | Base class |
 
 ```python
 from paymobx import PaymobxError, PaymobxRequestError
 
 try:
-    intention = client.create_intention(...)
+    client.create_intention(...)
 except PaymobxRequestError as e:
-    print(f"Paymob returned {e.status_code}: {e}")
+    print(e.status_code, e)
 except PaymobxError as e:
-    print(f"paymobx error: {e}")
+    print(e)
 ```
 
----
+## Examples
 
-## Full Usage Examples
-
-- [`examples/full_usage_example.py`](examples/full_usage_example.py) — demonstrates every method (modern + legacy).
-- [`examples/django_example/`](examples/django_example/) — a complete Django project with Card, Wallet, and Fawry buttons, and HMAC-verified callbacks.
-
----
+- `examples/full_usage_example.py` covers every method (modern, legacy, lifecycle)
+- `examples/django_example/` is a full Django project with card, wallet and Fawry buttons, plus HMAC-verified callbacks
 
 ## Changelog
 
+### 1.2.0
+
+- Added lifecycle methods on `PaymobxClient` through `PaymentOperationsMixin`:
+  - `refund_transaction`
+  - `void_transaction`
+  - `capture_transaction`
+  - `get_transaction_by_id`
+  - `get_transaction_by_order_id`
+  - `create_payment_link`
+  - `pay_with_saved_card`
+  - `create_subscription_plan`
+- Added regional routing: pass `region="egypt"`, `"uae"`, `"oman"`, or `"ksa"` to route every method to the correct Paymob host
+- Exported `PaymentOperationsMixin`
+- Added `is_paid_callback` and `is_paid_response` Django helpers
+- Lifecycle methods authenticate with `api_key`
+
 ### 1.1.0
 
-- **New**: Intention API support (`create_intention`, `create_fawry_intention`).
-- **New**: Unified Checkout URL builder (`get_unified_checkout_url`) for EG / UAE / OM / KSA.
-- **New**: Fawry / Kiosk helper.
-- **New**: `PaymobxValidationError` for clearer client-side errors.
-- **Fix**: Legacy iframe URL now uses `accept.paymob.com` (was `accept.paymobsolutions.com`).
-- **Fix**: HMAC helpers no longer crash when the `hmac` query param is missing.
+- Intention API support (`create_intention`, `create_fawry_intention`)
+- Unified Checkout URL builder for EG, UAE, OM, KSA
+- Fawry/Kiosk helper
+- `PaymobxValidationError`
+- Fixed legacy iframe URL host (`accept.paymob.com`)
+- HMAC helpers no longer crash when the `hmac` query param is missing
 
 ### 1.0.0
 
-- Initial release: legacy Order / Payment Key / Iframe / Wallet flow + HMAC utilities.
+- Initial release: legacy order, payment key, iframe, wallet, HMAC helpers

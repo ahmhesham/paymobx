@@ -81,7 +81,6 @@ DATABASES = {
     }
 }
 
-
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
 
@@ -123,13 +122,17 @@ STATIC_URL = 'static/'
 # ----------------------------------------------------------------------
 # All three keys live in Paymob Dashboard -> Settings -> Developers.
 
-PAYMOBX_API_KEY    = ""   # legacy flow only (create_order / generate_payment_key)
-PAYMOBX_SECRET_KEY = ""   # modern Intention API flow (create_intention)
-PAYMOBX_PUBLIC_KEY = ""   # modern Unified Checkout URL
-PAYMOBX_HMAC       = ""   # Dashboard -> Settings -> HMAC
+PAYMOBX_API_KEY    = ""
+PAYMOBX_SECRET_KEY = ""
+PAYMOBX_PUBLIC_KEY = ""
+PAYMOBX_HMAC       = ""
+
+# Region: egypt | uae | oman | ksa
+PAYMOBX_REGION = "egypt"
 
 # Integration IDs — Dashboard -> Developers -> Payment Integrations
-PAYMOBX_CARD_INTEGRATION_ID   = 0
-PAYMOBX_WALLET_INTEGRATION_ID = 0
-PAYMOBX_KIOSK_INTEGRATION_ID  = 0   # Fawry / Kiosk
-PAYMOBX_IFRAME_ID             = 0   # legacy iframe only
+PAYMOBX_CARD_INTEGRATION_ID   = 0000000000
+PAYMOBX_WALLET_INTEGRATION_ID = 0000000000
+PAYMOBX_KIOSK_INTEGRATION_ID  = 0000000000   # Fawry / Kiosk
+PAYMOBX_MOTO_INTEGRATION_ID   = 0000000000   # MOTO 
+PAYMOBX_IFRAME_ID             = 0000000000    # legacy iframe only

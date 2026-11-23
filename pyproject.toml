@@ -1,32 +1,64 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "paymobx"
-version = "1.1.0"
+version = "1.2.0"
 authors = [
   { name = "ahmhesham", email = "contact.ahmhesham@gmail.com" },
 ]
-description = "A professional, internationally-ready Python client for the Paymob payment gateway — Intention API, Unified Checkout, Fawry/Kiosk, and legacy Order flow."
+maintainers = [
+  { name = "ahmhesham", email = "contact.ahmhesham@gmail.com" },
+]
+description = "Python client for Paymob: Intention API, Unified Checkout, Fawry/Kiosk, legacy Order flow, refund/void/capture, inquiry, payment links, saved cards (MOTO), subscriptions, Django helpers, and multi-region support (EG / UAE / OM / KSA)."
 readme = "README.md"
 requires-python = ">=3.7"
-license = { text = "MIT" }
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = [
     "paymob",
-    "payments",
+    "paymob-python",
+    "paymob-api",
+    "paymob-sdk",
+    "paymob-integration",
     "payment-gateway",
+    "payments",
+    "payment-processing",
     "egypt",
     "fawry",
     "kiosk",
     "unified-checkout",
     "intention-api",
+    "refund",
+    "void",
+    "capture",
+    "payment-links",
+    "quicklink",
+    "saved-cards",
+    "moto",
+    "subscriptions",
+    "hmac",
     "django",
-    "paymobx",
+    "e-commerce",
+    "multi-region",
+    "eg",
+    "uae",
+    "om",
+    "ksa",
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Environment :: Web Environment",
+    "Framework :: Django",
+    "Framework :: Django :: 3.2",
+    "Framework :: Django :: 4.2",
+    "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
+    "Natural Language :: English",
+    "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.7",
@@ -35,9 +67,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Framework :: Django",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -49,12 +80,10 @@ django = ["django>=3.2"]
 
 [project.urls]
 Homepage = "https://github.com/ahmhesham/paymobx"
-Source = "https://github.com/ahmhesham/paymobx"
+Repository = "https://github.com/ahmhesham/paymobx"
+Documentation = "https://github.com/ahmhesham/paymobx#readme"
 Issues = "https://github.com/ahmhesham/paymobx/issues"
 Changelog = "https://github.com/ahmhesham/paymobx/blob/main/README.md#changelog"
-
-[tool.setuptools]
-license-files = ["LICENSE"]
 
 [tool.setuptools.packages.find]
 where = ["."]

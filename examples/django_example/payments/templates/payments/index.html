@@ -3,35 +3,42 @@
 <head>
     <title>paymobx Django Example</title>
     <style>
-        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; }
-        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; text-align: center; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 10px 0; width: 100%; }
-        input { padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 20px; border-radius: 4px; border: 1px solid #ddd; }
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; margin: 0; }
+        .card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; text-align: center; max-height: 90vh; overflow-y: auto; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px 0; width: 100%; }
+        input { padding: 10px; width: 100%; box-sizing: border-box; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ddd; }
         .wallet { background: #28a745; }
         .fawry  { background: #ffc107; color: #212529; }
-        hr { border: none; border-top: 1px solid #eee; margin: 20px 0; }
+        .legacy { background: #6c757d; }
+        h3 { margin-top: 20px; margin-bottom: 10px; font-size: 14px; color: #666; text-transform: uppercase; }
+        hr { border: none; border-top: 1px solid #eee; margin: 15px 0; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>paymobx Checkout</h1>
-        <p>Test all payment methods here.</p>
 
-        <form action="{% url 'pay_with_card' %}" method="get">
-            <button type="submit">Pay with Credit Card</button>
+        <h3>Modern Flow (Unified Checkout)</h3>
+        <form action="{% url 'pay_card' %}" method="get">
+            <button type="submit">Pay with Card (Modern)</button>
+        </form>
+        <form action="{% url 'pay_wallet' %}" method="get">
+            <input type="text" name="wallet_number" placeholder="Wallet Number" value="01012345678">
+            <button type="submit" class="wallet">Pay with Wallet (Modern)</button>
+        </form>
+        <form action="{% url 'pay_fawry' %}" method="get">
+            <button type="submit" class="fawry">Pay with Fawry (Modern)</button>
         </form>
 
         <hr>
 
-        <form action="{% url 'pay_with_wallet' %}" method="get">
-            <input type="text" name="wallet_number" placeholder="Enter Wallet Number" value="01012345678">
-            <button type="submit" class="wallet">Pay with Mobile Wallet</button>
+        <h3>Legacy Flow (Iframe & Redirect)</h3>
+        <form action="{% url 'pay_card_legacy' %}" method="get">
+            <button type="submit" class="legacy">Pay with Card (Legacy)</button>
         </form>
-
-        <hr>
-
-        <form action="{% url 'pay_with_fawry' %}" method="get">
-            <button type="submit" class="fawry">Pay with Fawry</button>
+        <form action="{% url 'pay_wallet_legacy' %}" method="get">
+            <input type="text" name="wallet_number" placeholder="Wallet Number" value="01012345678">
+            <button type="submit" class="legacy">Pay with Wallet (Legacy)</button>
         </form>
     </div>
 </body>

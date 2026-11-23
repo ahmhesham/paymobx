@@ -26,3 +26,49 @@ def is_valid_response(request: Any, hmac_secret: str) -> bool:
     params = request.GET.dict()
     received = params.get("hmac")
     return verify_response_hmac(params, hmac_secret, received)
+
+
+# ---------------------------------------------------------------------------
+# Paid-status helpers
+#
+# These check HMAC *and* whether the payment succeeded, in one call.
+# Use them when you only care about "should I fulfill this order?".
+# ---------------------------------------------------------------------------
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        return value.lower() == "true"
+    return False
+
+
+def is_paid_callback(request: Any, hmac_secret: str) -> bool:
+    """
+    Return True only if a POST webhook is genuine AND the payment succeeded.
+
+    Covers both normal transaction callbacks and subscription callbacks —
+    both store the success flag at ``obj.success``.
+    """
+    if request.method != "POST":
+        return False
+    try:
+        payload = json.loads(request.body)
+    except (json.JSONDecodeError, AttributeError):
+        return False
+
+    if not verify_hmac(payload, hmac_secret, request.GET.get("hmac")):
+        return False
+
+    obj = payload.get("obj") or {}
+    return _truthy(obj.get("success"))
+
+
+def is_paid_response(request: Any, hmac_secret: str) -> bool:
+    """
+    Return True only if a GET redirect is genuine AND the payment succeeded.
+    """
+    params = request.GET.dict()
+    if not verify_response_hmac(params, hmac_secret, params.get("hmac")):
+        return False
+    return _truthy(params.get("success", ""))

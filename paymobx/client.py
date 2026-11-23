@@ -7,7 +7,7 @@ from .exceptions import (
     PaymobxRequestError,
     PaymobxValidationError,
 )
-
+from .operations import PaymentOperationsMixin
 
 BILLING_DEFAULTS: Dict[str, str] = {
     "first_name": "NA",
@@ -26,7 +26,7 @@ BILLING_DEFAULTS: Dict[str, str] = {
 }
 
 
-class PaymobxClient:
+class PaymobxClient(PaymentOperationsMixin):
     """
     A professional client for interacting with the Paymob API.
 
@@ -40,11 +40,31 @@ class PaymobxClient:
        - Requires ``public_key`` (Unified Checkout URL)
 
     Both keys are found in the Paymob Dashboard -> Settings -> Developers.
+
+    Regions
+    -------
+    Pass ``region="uae"``, ``"oman"``, or ``"ksa"`` to route all Accept API
+    calls (refund, void, capture, inquiry, links, MOTO, subscriptions) to the
+    correct regional host. Default is ``"egypt"``.
     """
 
-    BASE_URL = "https://accept.paymob.com/api"
-    INTENTION_URL = "https://accept.paymob.com/v1/intention/"
+    # Accept API base URLs per region
+    BASE_URLS: Dict[str, str] = {
+        "egypt": "https://accept.paymob.com/api",
+        "uae":   "https://uae.paymob.com/api",
+        "oman":  "https://oman.paymob.com/api",
+        "ksa":   "https://ksa.paymob.com/api",
+    }
 
+    # Intention API URLs per region
+    INTENTION_URLS: Dict[str, str] = {
+        "egypt": "https://accept.paymob.com/v1/intention/",
+        "uae":   "https://uae.paymob.com/v1/intention/",
+        "oman":  "https://oman.paymob.com/v1/intention/",
+        "ksa":   "https://ksa.paymob.com/v1/intention/",
+    }
+
+    # Unified Checkout URLs per region
     CHECKOUT_ENDPOINTS: Dict[str, str] = {
         "egypt": "https://eg.checkout.paymob.com/unifiedcheckout/",
         "uae":   "https://uae.checkout.paymob.com/unifiedcheckout/",
@@ -58,6 +78,7 @@ class PaymobxClient:
         secret_key: Optional[str] = None,
         public_key: Optional[str] = None,
         timeout: int = 30,
+        region: str = "egypt",
     ) -> None:
         """
         Args:
@@ -65,12 +86,24 @@ class PaymobxClient:
             secret_key: Paymob Secret Key (required for Intention API).
             public_key: Paymob Public Key (required for Unified Checkout URL).
             timeout:    HTTP request timeout in seconds.
+            region:     One of "egypt", "uae", "oman", "ksa". Default "egypt".
         """
         self.api_key = api_key
         self.secret_key = secret_key
         self.public_key = public_key
         self.timeout = timeout
         self._auth_token: Optional[str] = None
+
+        region_key = (region or "egypt").lower()
+        if region_key not in self.BASE_URLS:
+            raise PaymobxValidationError(
+                f"Unsupported region '{region}'. "
+                f"Choose from {list(self.BASE_URLS.keys())}."
+            )
+
+        self.region = region_key
+        self.base_url = self.BASE_URLS[region_key]
+        self.intention_url = self.INTENTION_URLS[region_key]
 
     # ------------------------------------------------------------------
     # MODERN FLOW — Intention API + Unified Checkout
@@ -141,7 +174,7 @@ class PaymobxClient:
             payload["extras"] = extras
 
         response = requests.post(
-            self.INTENTION_URL,
+            self.intention_url,
             json=payload,
             headers={
                 "Authorization": f"Token {self.secret_key}",
@@ -166,7 +199,7 @@ class PaymobxClient:
     def get_unified_checkout_url(
         self,
         client_secret: str,
-        region: str = "egypt",
+        region: Optional[str] = None,
         public_key: Optional[str] = None,
     ) -> str:
         """
@@ -174,7 +207,8 @@ class PaymobxClient:
 
         Args:
             client_secret: ``client_secret`` returned from :meth:`create_intention`.
-            region:        One of "egypt", "uae", "oman", "ksa". Default "egypt".
+            region:        Override the client's region for this URL.
+                           One of "egypt", "uae", "oman", "ksa".
             public_key:    Override the client's public_key if needed.
 
         Returns:
@@ -185,10 +219,12 @@ class PaymobxClient:
             raise PaymobxValidationError(
                 "public_key is required. Pass it to PaymobxClient or as an argument."
             )
-        base = self.CHECKOUT_ENDPOINTS.get((region or "egypt").lower())
+
+        region_key = (region or self.region).lower()
+        base = self.CHECKOUT_ENDPOINTS.get(region_key)
         if not base:
             raise PaymobxValidationError(
-                f"Unsupported region '{region}'. "
+                f"Unsupported region '{region_key}'. "
                 f"Choose from {list(self.CHECKOUT_ENDPOINTS.keys())}."
             )
         query = urlencode({"publicKey": pub, "clientSecret": client_secret})
@@ -225,7 +261,7 @@ class PaymobxClient:
                 "api_key is required for the legacy flow."
             )
         response = requests.post(
-            f"{self.BASE_URL}/auth/tokens",
+            f"{self.base_url}/auth/tokens",
             json={"api_key": self.api_key},
             timeout=self.timeout,
         )
@@ -255,7 +291,7 @@ class PaymobxClient:
             "items": items or [],
         }
         response = requests.post(
-            f"{self.BASE_URL}/ecommerce/orders",
+            f"{self.base_url}/ecommerce/orders",
             json=payload,
             timeout=self.timeout,
         )
@@ -292,7 +328,7 @@ class PaymobxClient:
             "integration_id": integration_id,
         }
         response = requests.post(
-            f"{self.BASE_URL}/acceptance/payment_keys",
+            f"{self.base_url}/acceptance/payment_keys",
             json=payload,
             timeout=self.timeout,
         )
@@ -311,7 +347,7 @@ class PaymobxClient:
             "payment_token": payment_token,
         }
         response = requests.post(
-            f"{self.BASE_URL}/acceptance/payments/pay",
+            f"{self.base_url}/acceptance/payments/pay",
             json=payload,
             timeout=self.timeout,
         )
@@ -326,6 +362,6 @@ class PaymobxClient:
     def get_iframe_url(self, iframe_id: int, payment_token: str) -> str:
         """Legacy: build the iframe URL for card payments."""
         return (
-            f"https://accept.paymob.com/api/acceptance/iframes/"
+            f"{self.base_url}/acceptance/iframes/"
             f"{iframe_id}?payment_token={payment_token}"
         )
